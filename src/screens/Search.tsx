@@ -1,20 +1,48 @@
 import React, {useState, useEffect} from 'react';
 import {
   Text,
-  StyleSheet,
   View,
   Image,
   ScrollView,
   TouchableHighlight,
+  ImageStyle,
 } from 'react-native';
 import {useNavigationSearchBarUpdate} from 'react-native-navigation-hooks';
 import {searchBooks, GoogleBook} from '../api/books';
-import {Navigation} from 'react-native-navigation';
+import {useDebounce} from '@react-hook/debounce';
+import {NavigationComponent, NavigateTo} from '../navigation';
+import {Routes} from './routes';
+import {styleSheetFactory} from '../themes';
+import {useTheme} from 'react-native-themed-styles';
 
-function SearchScreen({componentId}: {componentId: string}) {
-  const [query, setQuery] = useState<string>('');
+const themeStyles = styleSheetFactory((theme) => ({
+  listContainer: {
+    paddingVertical: 16,
+    flex: 1,
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  listItem: {
+    width: '50%',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  listTitle: {
+    marginTop: 8,
+    color: theme.textColor,
+  },
+  image: {
+    height: 150,
+    width: 200,
+  },
+}));
+
+const SearchScreen: NavigationComponent = ({componentId}) => {
+  const [query, setQuery] = useDebounce('', 500);
   const [books, setBooks] = useState<GoogleBook[]>([]);
 
+  const [styles] = useTheme(themeStyles);
   useNavigationSearchBarUpdate((e) => {
     if (e.isFocused) {
       setQuery(e.text);
@@ -31,27 +59,11 @@ function SearchScreen({componentId}: {componentId: string}) {
       });
     }
   }, [query]);
-  if (books.length < 1) {
-    return <View />;
-  }
 
-  const navigateToBookDetails = (book: GoogleBook) => {
-    Navigation.push(componentId, {
-      component: {
-        name: 'app.Booksy.BookDetails',
-        passProps: {
-          book,
-        },
-        options: {
-          topBar: {
-            title: {
-              text: book.volumeInfo.title,
-            },
-          },
-        },
-      },
+  const navigateToBookDetails = (book: GoogleBook) =>
+    NavigateTo(componentId, Routes.BookDetails, {
+      book,
     });
-  };
 
   const bookList = books.filter((book) => book.volumeInfo.imageLinks);
   return (
@@ -66,7 +78,7 @@ function SearchScreen({componentId}: {componentId: string}) {
               <Image
                 source={{uri: book.volumeInfo.imageLinks.thumbnail}}
                 resizeMode="contain"
-                style={styles.image}
+                style={styles.image as ImageStyle}
               />
               <Text style={styles.listTitle}>{book.volumeInfo.title}</Text>
             </View>
@@ -75,28 +87,17 @@ function SearchScreen({componentId}: {componentId: string}) {
       </View>
     </ScrollView>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  listContainer: {
-    paddingVertical: 16,
-    flex: 1,
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  listItem: {
-    width: '50%',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  listTitle: {
-    marginTop: 8,
-    color: 'black',
-  },
-  image: {
-    height: 150,
-    width: 200,
+SearchScreen.options = () => ({
+  topBar: {
+    title: {
+      text: 'Search!',
+    },
+    searchBar: true,
+    searchBarHiddenWhenScrolling: true,
+    searchBarPlaceholder: 'search by Title, Author or ISBN...',
   },
 });
+
 export default SearchScreen;

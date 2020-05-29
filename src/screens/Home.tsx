@@ -1,7 +1,8 @@
 import React from 'react';
 import {ScrollView, Text, StyleSheet, View} from 'react-native';
+import {NavigationComponent} from '../navigation';
 
-const HomeScreen = () => {
+const HomeScreen: NavigationComponent = () => {
   return (
     <ScrollView style={styles.scroll}>
       <View style={styles.root}>
@@ -10,6 +11,16 @@ const HomeScreen = () => {
     </ScrollView>
   );
 };
+
+HomeScreen.options = () => ({
+  topBar: {
+    searchBar: true,
+    searchBarPlaceholder: 'Search...',
+    title: {
+      text: 'Booksy',
+    },
+  },
+});
 
 const styles = StyleSheet.create({
   scroll: {
